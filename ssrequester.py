@@ -127,6 +127,20 @@ def build_db_record(items):
     return a
 
 
+def verify_address(url, address):
+    logger.debug(f"Verifying {address} url: {url}")
+    return list(ss_ads.ads.find({"url": f"{url}", "address": f"{address}"}))
+
+
+def verify_geodata(address):
+    logger.debug(f"Verifying Geodata: {address}")
+    return list(ss_ads.geodata.find({"address": f"{address}"}))
+
+
+def isProperty(param):
+    return param in config and config[param]
+
+
 while True:
     try:
         myclient = pymongo.MongoClient(config["db.url"])
@@ -153,12 +167,11 @@ while True:
                         a = build_db_record(items)
                         items = []
 
-                        logger.debug(f"Verifying {a['address']} url: {a['url']}")
-                        if not list(ss_ads.ads.find({"url": f"{a['url']}", "address": f"{a['address']}"})):
+                        if (isProperty('upload') and not verify_address(a['url'], a['address'])) or not isProperty('upload'):
                             new_ads.append(a)
 
-                        logger.debug(f"Verifying Geodata: {a['address']}")
-                        if not list(ss_ads.geodata.find({"address": f"{a['address']}"})):
+
+                        if (isProperty('upload') and not verify_geodata(a['address'])) or not isProperty('upload'):
                             new_address.append(a['address'])
 
                         try:
