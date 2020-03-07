@@ -167,11 +167,10 @@ while True:
                         a = build_db_record(items)
                         items = []
 
-                        if (isProperty('upload') and not verify_address(a['url'], a['address'])) or not isProperty('upload'):
+                        if (isProperty('upload') and not verify_address(a['url'], a['address'])):
                             new_ads.append(a)
 
-
-                        if (isProperty('upload') and not verify_geodata(a['address'])) or not isProperty('upload'):
+                        if (isProperty('upload') and not verify_geodata(a['address'])):
                             new_address.append(a['address'])
 
                         try:
@@ -182,14 +181,14 @@ while True:
 
                 i += 1
 
-            if 'report' in config and config['report']:
+            if isProperty('report'):
                 generate_report(ads, new_ads, new_address)
 
-            if 'upload' in config and config['upload'] and new_ads:
+            if isProperty('upload') and new_ads:
                 logger.info(f"Inserting new records: {len(new_ads)}")
                 uload_new_records(new_ads)
 
-            if 'export' in config and config['export'] and 'export.filename' in config:
+            if isProperty('export') and 'export.filename' in config:
                 logger.info("Exporting to file: %s", config['export.filename'])
                 export_to_file(ads)
     except RuntimeError as e:
