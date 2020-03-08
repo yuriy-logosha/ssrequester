@@ -141,6 +141,21 @@ def is_property(param: str) -> bool:
     return param in config and config[param]
 
 
+def to_buffer(buffer, d):
+    if is_url(d):
+        buffer.append(d[1][3][1])
+    elif is_item(d):
+        buffer.append(d[len(d) - 1])
+
+
+def to_ads(ads, a):
+    try:
+        _addr = ads[a['address']]
+        _addr['items'].append(a)
+    except:
+        ads[a['address']] = {'items': [a]}
+
+
 while True:
     try:
         myclient = pymongo.MongoClient(config["db.url"])
@@ -153,18 +168,15 @@ while True:
             ads = {}
             new_ads = []
             new_address = []
-            items = []
+            buffer = []
             i = 0
             while i <= len(data) - 1:
                 d = data[i]
                 if is_url(d) or is_item(d):
-                    if is_url(d):
-                        items.append(d[1][3][1])
-                    elif is_item(d):
-                        items.append(d[len(d) - 1])
-                elif items:
-                    a = build_db_record(items)
-                    items = []
+                    to_buffer(buffer, d)
+                elif buffer:
+                    a = build_db_record(buffer)
+                    buffer = []
 
                     if is_property('upload') and not verify_address(a['url'], a['address']):
                         new_ads.append(a)
@@ -172,11 +184,7 @@ while True:
                     if is_property('upload') and not verify_geodata(a['address']):
                         new_address.append(a['address'])
 
-                    try:
-                        _addr = ads[a['address']]
-                        _addr['items'].append(a)
-                    except:
-                        ads[a['address']] = {'items': [a]}
+                    to_ads(ads, a)
 
                 i += 1
 
