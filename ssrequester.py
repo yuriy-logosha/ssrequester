@@ -162,22 +162,21 @@ while True:
                         items.append(d[1][3][1])
                     elif is_item(d):
                         items.append(d[len(d) - 1])
-                else:
-                    if items:
-                        a = build_db_record(items)
-                        items = []
+                elif items:
+                    a = build_db_record(items)
+                    items = []
 
-                        if is_property('upload') and not verify_address(a['url'], a['address']):
-                            new_ads.append(a)
+                    if is_property('upload') and not verify_address(a['url'], a['address']):
+                        new_ads.append(a)
 
-                        if is_property('upload') and not verify_geodata(a['address']):
-                            new_address.append(a['address'])
+                    if is_property('upload') and not verify_geodata(a['address']):
+                        new_address.append(a['address'])
 
-                        try:
-                            _addr = ads[a['address']]
-                            _addr['items'].append(a)
-                        except:
-                            ads[a['address']] = {'items': [a]}
+                    try:
+                        _addr = ads[a['address']]
+                        _addr['items'].append(a)
+                    except:
+                        ads[a['address']] = {'items': [a]}
 
                 i += 1
 
