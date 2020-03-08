@@ -137,7 +137,7 @@ def verify_geodata(address):
     return list(ss_ads.geodata.find({"address": f"{address}"}))
 
 
-def isProperty(param):
+def is_property(param: str) -> bool:
     return param in config and config[param]
 
 
@@ -167,10 +167,10 @@ while True:
                         a = build_db_record(items)
                         items = []
 
-                        if (isProperty('upload') and not verify_address(a['url'], a['address'])):
+                        if is_property('upload') and not verify_address(a['url'], a['address']):
                             new_ads.append(a)
 
-                        if (isProperty('upload') and not verify_geodata(a['address'])):
+                        if is_property('upload') and not verify_geodata(a['address']):
                             new_address.append(a['address'])
 
                         try:
@@ -181,14 +181,14 @@ while True:
 
                 i += 1
 
-            if isProperty('report'):
+            if is_property('report'):
                 generate_report(ads, new_ads, new_address)
 
-            if isProperty('upload') and new_ads:
+            if is_property('upload') and new_ads:
                 logger.info(f"Inserting new records: {len(new_ads)}")
                 uload_new_records(new_ads)
 
-            if isProperty('export') and 'export.filename' in config:
+            if is_property('export') and 'export.filename' in config:
                 logger.info("Exporting to file: %s", config['export.filename'])
                 export_to_file(ads)
     except RuntimeError as e:
