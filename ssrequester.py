@@ -178,11 +178,12 @@ while True:
                     a = build_db_record(buffer)
                     buffer = []
 
-                    if is_property('upload') and not verify_address(a['url'], a['address']):
-                        new_ads.append(a)
+                    if is_property('upload'):
+                        if not verify_address(a['url'], a['address']):
+                            new_ads.append(a)
 
-                    if is_property('upload') and not verify_geodata(a['address']):
-                        new_address.append(a['address'])
+                        if not verify_geodata(a['address']):
+                            new_address.append(a['address'])
 
                     to_ads(ads, a)
 
