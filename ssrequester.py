@@ -74,7 +74,7 @@ def generate_report(ads={}, new_ads=[], new_address=[]):
         logger.error(e)
 
 
-def uload_new_records(new_ads):
+def upload_new_records(new_ads):
     try:
         ss_ads.ads.insert_many(new_ads)
     except RuntimeError as e:
@@ -114,7 +114,7 @@ def request_ss_records():
 def build_db_record(items):
     a = {}
     try:
-        a = {'url': config['sscom.url'] + items[0], 'address': items[1],
+        a = {'kind': 'ad', 'url': config['sscom.url'] + items[0], 'address': items[1],
              'date': datetime.datetime.utcnow()}
         if len(items) == 6:
             a.update({'m2': items[2], 'level': items[3], 'type': config['house.marker'],
@@ -194,7 +194,7 @@ while True:
 
             if is_property('upload') and new_ads:
                 logger.info(f"Inserting new records: {len(new_ads)}")
-                uload_new_records(new_ads)
+                upload_new_records(new_ads)
 
             if is_property('export') and 'export.filename' in config:
                 logger.info("Exporting to file: %s", config['export.filename'])
@@ -206,4 +206,4 @@ while True:
         logger.info("Waiting %s seconds.", config['restart'])
         time.sleep(config['restart'])
     else:
-        exit()
+        break
