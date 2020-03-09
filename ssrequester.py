@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import pymongo, logging, time
 import datetime, os
+from datetime import datetime
 from utils import json_from_file, MyHTMLParser, json_to_file, _get
 
 config_file_name = 'config.json'
@@ -114,14 +115,11 @@ def request_ss_records():
 def build_db_record(items):
     a = {}
     try:
-        a = {'kind': 'ad', 'url': config['sscom.url'] + items[0], 'address': items[1],
-             'date': datetime.datetime.utcnow()}
+        a = {'kind': 'ad', 'url': config['sscom.url'] + items[0], 'address': items[1], 'date': datetime.utcnow()}
         if len(items) == 6:
-            a.update({'m2': items[2], 'level': items[3], 'type': config['house.marker'],
-                 'price_m2': items[4], 'price': items[5]})
+            a.update({'m2': items[2], 'level': items[3], 'type': config['house.marker'], 'price_m2': items[4], 'price': items[5]})
         elif len(items) == 8:
-            a.update({'rooms': items[2], 'm2': items[3], 'level': items[4], 'type': items[5],
-                 'price_m2': items[6], 'price': items[7]})
+            a.update({'rooms': items[2], 'm2': items[3], 'level': items[4], 'type': items[5], 'price_m2': items[6], 'price': items[7]})
     except RuntimeError as e:
         logger.debug(e)
     return a

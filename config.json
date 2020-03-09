@@ -8,7 +8,7 @@
   "upload": false,
   "export": true,
   "export.filename": "ads.json",
-  "sscom.url": "www.ss.com",
+  "sscom.url": "https://www.ss.com",
   "sscom.class.url": "am",
   "sscom.class": "msga2-o pp6",
   "house.marker": "Ч. дом",
