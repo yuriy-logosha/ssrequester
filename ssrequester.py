@@ -104,7 +104,7 @@ def request_ss_records():
             pages_max = last.split('page')[1].split('.')[0]
 
             for p in range(2, int(pages_max)):
-                _url = f"https://{config['sscom.url']}{last.replace(pages_max, str(p))}"
+                _url = f"{config['sscom.url']}{last.replace(pages_max, str(p))}"
                 logger.debug(f"Looking for new records in rest of pages {_url}")
                 data += MyHTMLParser({'valid_tags': ['tr', 'td', 'a', 'br']}).feed_and_return(_get(_url).text).data
     except RuntimeError as e:
