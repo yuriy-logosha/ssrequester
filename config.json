@@ -1,12 +1,12 @@
 {
   "sites": [
-    "https://www.ss.com/ru/real-estate/flats/riga/centre/sell/",
-    "https://www.ss.com/ru/real-estate/flats/riga/purvciems/sell/",
-    "https://www.ss.com/ru/real-estate/homes-summer-residences/riga/all/sell/"
+    "https://www.ss.com/lv/real-estate/flats/riga/centre/sell/",
+    "https://www.ss.com/lv/real-estate/flats/riga/purvciems/sell/",
+    "https://www.ss.com/lv/real-estate/homes-summer-residences/riga/all/sell/"
   ],
-  "report": true,
-  "upload": false,
-  "export": true,
+  "report": false,
+  "upload": true,
+  "export": false,
   "export.filename": "ads.json",
   "sscom.url": "https://www.ss.com",
   "sscom.class.url": "am",
@@ -17,5 +17,6 @@
   "logging.file": "ssrequester.log",
   "logging.level": 10,
   "db.url": "mongodb://192.168.1.61:27017/",
-  "restart": 0
+  "address.field": "address_lv",
+  "restart": 900
 }

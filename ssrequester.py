@@ -34,6 +34,8 @@ logging.basicConfig(format=config["logging.format"], handlers=[c_handler, f_hand
 logger = logging.getLogger(config["logging.name"])
 logger.setLevel(logging_level)
 
+address_field = config['address.field']
+
 
 def extract_pages(data):
     pages = []
@@ -49,7 +51,7 @@ def is_item(item):
 
 
 def is_url(item):
-    return len(item) >= 3 and item[0] == 'a' and len(item[1]) > 2 and len(item[1][2]) > 1 and item[1][2][1] == config[
+    return len(item) >= 2 and item[0] == 'a' and len(item[1]) > 2 and len(item[1][2]) > 1 and item[1][2][1] == config[
         "sscom.class.url"]
 
 
@@ -98,7 +100,8 @@ def request_ss_records():
     try:
         for url in config["sites"]:
             logger.info(f"Looking for new records in {url}")
-            page = MyHTMLParser({'valid_tags': ['tr', 'td', 'a']}).feed_and_return(_get(url).text)
+            parser_config = {'valid_tags': ['tr', 'td', 'a', 'br', 'b'], 'skip_tags': ['b']}
+            page = MyHTMLParser(parser_config).feed_and_return(_get(url).text)
             pages, last = extract_pages(page.data)
             data += page.data
             pages_max = last.split('page')[1].split('.')[0]
@@ -106,7 +109,7 @@ def request_ss_records():
             for p in range(2, int(pages_max)):
                 _url = f"{config['sscom.url']}{last.replace(pages_max, str(p))}"
                 logger.debug(f"Looking for new records in rest of pages {_url}")
-                data += MyHTMLParser({'valid_tags': ['tr', 'td', 'a', 'br']}).feed_and_return(_get(_url).text).data
+                data += MyHTMLParser(parser_config).feed_and_return(_get(_url).text).data
     except RuntimeError as e:
         logger.debug(e)
     return data
@@ -115,7 +118,7 @@ def request_ss_records():
 def build_db_record(items):
     a = {}
     try:
-        a = {'kind': 'ad', 'url': config['sscom.url'] + items[0], 'address': items[1], 'date': datetime.utcnow()}
+        a = {'kind': 'ad', 'url': '/'.join(items[0].split('/')[2:]), address_field: items[1], 'date': datetime.utcnow()}
         if len(items) == 6:
             a.update({'m2': items[2], 'level': items[3], 'type': config['house.marker'], 'price_m2': items[4], 'price': items[5]})
         elif len(items) == 8:
@@ -127,12 +130,12 @@ def build_db_record(items):
 
 def verify_address(url, address):
     logger.debug(f"Verifying {address} url: {url}")
-    return list(ss_ads.ads.find({"url": f"{url}", "address": f"{address}"}))
+    return list(ss_ads.ads.find({"url": f"{url}", address_field: f"{address}"}))
 
 
 def verify_geodata(address):
     logger.debug(f"Verifying Geodata: {address}")
-    return list(ss_ads.geodata.find({"address": f"{address}"}))
+    return list(ss_ads.geodata.find({address_field: f"{address}"}))
 
 
 def is_property(param: str) -> bool:
@@ -148,10 +151,10 @@ def to_buffer(buffer, d):
 
 def to_ads(ads, a):
     try:
-        _addr = ads[a['address']]
+        _addr = ads[a[address_field]]
         _addr['items'].append(a)
     except:
-        ads[a['address']] = {'items': [a]}
+        ads[a[address_field]] = {'items': [a]}
 
 
 while True:
@@ -177,11 +180,11 @@ while True:
                     buffer = []
 
                     if is_property('upload'):
-                        if not verify_address(a['url'], a['address']):
+                        if not verify_address(a['url'], a[address_field]):
                             new_ads.append(a)
 
-                        if not verify_geodata(a['address']):
-                            new_address.append(a['address'])
+                        if not verify_geodata(a[address_field]):
+                            new_address.append(a[address_field])
 
                     to_ads(ads, a)
 
