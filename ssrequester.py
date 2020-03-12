@@ -118,7 +118,7 @@ def request_ss_records():
 def build_db_record(items):
     a = {}
     try:
-        a = {'kind': 'ad', 'url': '/'.join(items[0].split('/')[2:]), address_field: items[1], 'date': datetime.utcnow()}
+        a = {'kind': 'ad', 'url': '/'.join(items[0].split('/')[3:]), address_field: items[1], 'date': datetime.utcnow()}
         if len(items) == 6:
             a.update({'m2': items[2], 'level': items[3], 'type': config['house.marker'], 'price_m2': items[4], 'price': items[5]})
         elif len(items) == 8:
