@@ -115,14 +115,51 @@ def request_ss_records():
     return data
 
 
+type_mapping = {
+    'Hrušč.': 'Хрущ.',
+    'Jaun.': 'Нов.',
+    'Renov.': 'Рекон.',
+    'LT proj.': 'Лит. пр.',
+    'Specpr.': 'Спец. пр.',
+    'Staļina': 'Сталинка',
+    '103.': '103-я',
+    '104.': '104-я',
+    '119.': '119-я',
+    '467.': '467-я',
+    '602.': '602-я',
+    'M. ģim.': 'М. сем.',
+    'Priv. m.': 'Ч. дом',
+    'P. kara': 'Дов. дом'
+}
+
+
+room_mapping = {
+    'Citi': '-'
+}
+
+
+def get_type_mapping(key):
+    try:
+        return type_mapping[key]
+    except:
+        return key
+
+
+def get_room_mapping(key):
+    try:
+        return room_mapping[key]
+    except:
+        return key
+
+
 def build_db_record(items):
     a = {}
     try:
         a = {'kind': 'ad', 'url': '/'.join(items[0].split('/')[3:]), address_field: items[1], 'date': datetime.utcnow()}
         if len(items) == 6:
-            a.update({'m2': items[2], 'level': items[3], 'type': config['house.marker'], 'price_m2': items[4], 'price': items[5]})
+            a.update({'m2': items[2], 'level': items[3], 'type': get_type_mapping(['Priv. m.']), 'price_m2': items[4], 'price': items[5]})
         elif len(items) == 8:
-            a.update({'rooms': items[2], 'm2': items[3], 'level': items[4], 'type': items[5], 'price_m2': items[6], 'price': items[7]})
+            a.update({'rooms': get_room_mapping(items[2]), 'm2': items[3], 'level': items[4], 'type': get_type_mapping([items[5]]), 'price_m2': items[6], 'price': items[7]})
     except RuntimeError as e:
         logger.debug(e)
     return a

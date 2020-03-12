@@ -11,7 +11,6 @@
   "sscom.url": "https://www.ss.com",
   "sscom.class.url": "am",
   "sscom.class": "msga2-o pp6",
-  "house.marker": "Ч. дом",
   "logging.name": "ssrequester",
   "logging.format": "%(asctime)-15s %(levelname)s %(message)s",
   "logging.file": "ssrequester.log",
