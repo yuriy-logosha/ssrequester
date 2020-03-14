@@ -157,9 +157,9 @@ def build_db_record(items):
     try:
         a = {'kind': 'ad', 'url': '/'.join(items[0].split('/')[3:]), address_field: items[1], 'date': datetime.utcnow()}
         if len(items) == 6:
-            a.update({'m2': items[2], 'level': items[3], 'type': get_type_mapping(['Priv. m.']), 'price_m2': items[4], 'price': items[5]})
+            a.update({'m2': items[2], 'level': items[3], 'type': get_type_mapping('Priv. m.'), 'price_m2': items[4], 'price': items[5]})
         elif len(items) == 8:
-            a.update({'rooms': get_room_mapping(items[2]), 'm2': items[3], 'level': items[4], 'type': get_type_mapping([items[5]]), 'price_m2': items[6], 'price': items[7]})
+            a.update({'rooms': get_room_mapping(items[2]), 'm2': items[3], 'level': items[4], 'type': get_type_mapping(items[5]), 'price_m2': items[6], 'price': items[7]})
     except RuntimeError as e:
         logger.debug(e)
     return a
@@ -216,12 +216,11 @@ while True:
                     a = build_db_record(buffer)
                     buffer = []
 
-                    if is_property('upload'):
-                        if not verify_address(a['url'], a[address_field]):
-                            new_ads.append(a)
+                    if not verify_address(a['url'], a[address_field]):
+                        new_ads.append(a)
 
-                        if not verify_geodata(a[address_field]):
-                            new_address.append(a[address_field])
+                    if not verify_geodata(a[address_field]):
+                        new_address.append(a[address_field])
 
                     to_ads(ads, a)
 
