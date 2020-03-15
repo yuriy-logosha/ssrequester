@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-import pymongo, logging, time
-import datetime, os
+import datetime
+import os
 from datetime import datetime
+from enum import Enum
+
+import logging
+import pymongo
+import time
+
 from utils import json_from_file, MyHTMLParser, json_to_file, _get
 
 config_file_name = 'config.json'
@@ -15,6 +21,13 @@ except RuntimeError as e:
 
 if not os.path.exists('requests'):
     os.makedirs('requests')
+
+class ADTYPE(Enum):
+    UNDEFINED = 0
+    NEW = 1
+    OUTDATED = 2
+    EXISTS = 3
+
 
 formatter = logging.Formatter(config['logging.format'])
 # Create handlers
@@ -55,24 +68,25 @@ def is_url(item):
         "sscom.class.url"]
 
 
-def generate_report(ads={}, new_ads=[], new_address=[]):
+def generate_report(ads={}, new_ads=[], outdated_ads=[], new_address=[]):
     try:
+        print("____________ Retrieved from remote  __________________")
         for a in ads:
             for i in ads[a]['items']:
                 print("{0:>30} {1:7}".format(a, str(i)))
         print("______________________________________________________")
-        print("_____________  New Records  __________________________")
+        print("_____________  New Ad Records  _______________________")
         for a in new_ads:
             print(a)
-        print("______________________________________________________")
-        print(len(new_ads), "New records found.")
-
-        print("______________________________________________________")
-        print("_____________  New Address not in GeoData DB  ________")
-        for a in new_address:
+        print(len(new_ads), "New ad records found.")
+        print("_____________  Outdated Records  _____________________")
+        for a in outdated_ads:
             print(a)
-        print("______________________________________________________")
-        print(len(new_address), "New records found.")
+        print(len(outdated_ads), "Outdated records found.")
+        print("_____________  New Address not in GeoData DB  ________")
+        for a in set(new_address):
+            print(a)
+        print(len(new_address), "New addresses found.")
     except RuntimeError as e:
         logger.error(e)
 
@@ -83,6 +97,13 @@ def upload_new_records(new_ads):
     except RuntimeError as e:
         logger.error(e)
 
+
+def update_outdated_records(ads):
+    try:
+        for r in ads:
+            ss_ads.ads.update_one({'_id': r[0]}, {'$set': {'outdated': False}})
+    except RuntimeError as e:
+        logger.error(e)
 
 def export_to_file(ads):
     try:
@@ -166,8 +187,19 @@ def build_db_record(items):
 
 
 def verify_address(url, address):
-    logger.debug(f"Verifying {address} url: {url}")
-    return list(ss_ads.ads.find({"url": f"{url}", address_field: f"{address}"}))
+    try:
+        logger.debug(f"Verifying {address} url: {url}")
+        ad = list(ss_ads.ads.find({"url": f"{url}", address_field: f"{address}"}))
+        if len(ad) == 0:
+            return ADTYPE.NEW, None
+        elif len(ad) == 1:
+            if 'outdated' in ad[0] and ad[0]['outdated']:
+                return ADTYPE.OUTDATED, ad[0]['_id']
+            return ADTYPE.EXISTS, None
+    except Exception as e:
+        logger.error(e)
+
+    return ADTYPE.UNDEFINED, None
 
 
 def verify_geodata(address):
@@ -205,6 +237,7 @@ while True:
 
             ads = {}
             new_ads = []
+            outdated_ads = []
             new_address = []
             buffer = []
             i = 0
@@ -216,8 +249,12 @@ while True:
                     a = build_db_record(buffer)
                     buffer = []
 
-                    if not verify_address(a['url'], a[address_field]):
+                    strategy, addit = verify_address(a['url'], a[address_field])
+                    logger.debug(strategy)
+                    if strategy == ADTYPE.NEW:
                         new_ads.append(a)
+                    if strategy == ADTYPE.OUTDATED:
+                        outdated_ads.append((addit, a))
 
                     if not verify_geodata(a[address_field]):
                         new_address.append(a[address_field])
@@ -226,12 +263,20 @@ while True:
 
                 i += 1
 
+            print(len(new_ads), "New ad records found.")
+            print(len(outdated_ads), "Outdated records found.")
+            print(len(new_address), "New addresses found.")
+
             if is_property('report'):
-                generate_report(ads, new_ads, new_address)
+                generate_report(ads, new_ads, outdated_ads, new_address)
 
             if is_property('upload') and new_ads:
                 logger.info(f"Inserting new records: {len(new_ads)}")
                 upload_new_records(new_ads)
+
+            if is_property('upload') and outdated_ads:
+                logger.info(f"Updating records: {len(outdated_ads)}")
+                update_outdated_records(outdated_ads)
 
             if is_property('export') and 'export.filename' in config:
                 logger.info("Exporting to file: %s", config['export.filename'])
