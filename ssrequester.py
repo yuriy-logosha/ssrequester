@@ -204,7 +204,7 @@ def verify_address(url, address):
 
 def verify_geodata(address):
     logger.debug(f"Verifying Geodata: {address}")
-    return list(ss_ads.geodata.find({address_field: f"{address}"}))
+    return list(ss_ads.geodata.find({'address': f"{address}"}))
 
 
 def is_property(param: str) -> bool:
