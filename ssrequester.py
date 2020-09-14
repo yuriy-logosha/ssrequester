@@ -22,6 +22,7 @@ except RuntimeError as e:
 if not os.path.exists('requests'):
     os.makedirs('requests')
 
+
 class ADTYPE(Enum):
     UNDEFINED = 0
     NEW = 1
@@ -55,7 +56,10 @@ def extract_pages(data):
     for line in data:
         if isinstance(line, tuple) and line[0] == 'a' and len(line[1]) == 4 and line[1][0][1] == 'nav_id':
             pages.append(line[1][3][1])
-    return pages, pages.pop(0)
+    if pages:
+        return pages.pop(0)
+    else:
+        return 'page1.html'
 
 
 def is_item(item):
@@ -68,7 +72,7 @@ def is_url(item):
         "sscom.class.url"]
 
 
-def generate_report(ads={}, new_ads=[], outdated_ads=[], new_address=[]):
+def generate_report(ads={}, new_ads=[], outdated_ads=[]):
     try:
         print("____________ Retrieved from remote  __________________")
         for a in ads:
@@ -83,10 +87,6 @@ def generate_report(ads={}, new_ads=[], outdated_ads=[], new_address=[]):
         for a in outdated_ads:
             print(a)
         print(len(outdated_ads), "Outdated records found.")
-        print("_____________  New Address not in GeoData DB  ________")
-        for a in set(new_address):
-            print(a)
-        print(len(new_address), "New addresses found.")
     except RuntimeError as e:
         logger.error(e)
 
@@ -123,7 +123,7 @@ def request_ss_records():
             logger.info(f"Looking for new records in {url}")
             parser_config = {'valid_tags': ['tr', 'td', 'a', 'br', 'b'], 'skip_tags': ['b']}
             page = MyHTMLParser(parser_config).feed_and_return(_get(url).text)
-            pages, last = extract_pages(page.data)
+            last = extract_pages(page.data)
             data += page.data
             pages_max = last.split('page')[1].split('.')[0]
 
@@ -187,9 +187,8 @@ def build_db_record(items):
     return a
 
 
-def verify_address(url, address):
+def verify_ad(url, address):
     try:
-        logger.debug(f"Verifying {address} url: {url}")
         ad = list(ss_ads.ads.find({"url": f"{url}", address_field: f"{address}"}))
         if len(ad) == 0:
             return ADTYPE.NEW, None
@@ -204,7 +203,6 @@ def verify_address(url, address):
 
 
 def verify_geodata(address):
-    logger.debug(f"Verifying Geodata: {address}")
     return list(ss_ads.geodata.find({'address': f"{address}"}))
 
 
@@ -239,10 +237,9 @@ while True:
             ads = {}
             new_ads = []
             outdated_ads = []
-            new_address = []
             buffer = []
             i = 0
-            while i <= len(data) - 1:
+            while i < len(data):
                 d = data[i]
                 if is_url(d) or is_item(d):
                     to_buffer(buffer, d)
@@ -250,15 +247,12 @@ while True:
                     a = build_db_record(buffer)
                     buffer = []
 
-                    strategy, addit = verify_address(a['url'], a[address_field])
-                    logger.debug(strategy)
+                    strategy, addit = verify_ad(a['url'], a[address_field])
+                    logger.debug(f"Verify AD: {strategy} {a[address_field]} url: {a['url']}")
                     if strategy == ADTYPE.NEW:
                         new_ads.append(a)
                     if strategy == ADTYPE.OUTDATED:
                         outdated_ads.append((addit, a))
-
-                    if not verify_geodata(a[address_field]):
-                        new_address.append(a[address_field])
 
                     to_ads(ads, a)
 
@@ -266,10 +260,9 @@ while True:
 
             print(len(new_ads), "New ad records found.")
             print(len(outdated_ads), "Outdated records found.")
-            print(len(new_address), "New addresses found.")
 
             if is_property('report'):
-                generate_report(ads, new_ads, outdated_ads, new_address)
+                generate_report(ads, new_ads, outdated_ads)
 
             if is_property('upload') and new_ads:
                 logger.info(f"Inserting new records: {len(new_ads)}")
