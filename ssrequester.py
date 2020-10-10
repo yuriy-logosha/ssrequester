@@ -7,8 +7,9 @@ from datetime import datetime
 from enum import Enum
 
 import pymongo
-
-from utils import json_from_file, MyHTMLParser, json_to_file, _get
+from myfile import json_from_file, json_to_file
+from myparser import MyHTMLParser
+from myrequests import get as _get
 
 config_file_name = 'config.json'
 config = {}

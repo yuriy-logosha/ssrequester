@@ -1,0 +1,2 @@
+pymongo
+-e git://github.com/yuriy-logosha/myutils.git#egg=myutils
