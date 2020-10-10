@@ -16,6 +16,7 @@
   "sscom.url": "https://www.ss.com",
   "sscom.class.url": "am",
   "sscom.class": "msga2-o pp6",
+  "sscom.parser.config": {"valid_tags": ["tr", "td", "a", "br", "b"], "skip_tags": ["b"]},
   "logging.name": "ssrequester",
   "logging.format": "%(asctime)-15s %(levelname)s %(message)s",
   "logging.file": "ssrequester.log",

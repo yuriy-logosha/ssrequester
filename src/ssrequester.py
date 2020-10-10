@@ -106,6 +106,7 @@ def update_outdated_records(ads):
     except RuntimeError as e:
         logger.error(e)
 
+
 def export_to_file(ads):
     try:
         ads_for_json = ads.copy()
@@ -122,13 +123,12 @@ def request_ss_records():
     try:
         for url in config["sites"]:
             logger.info(f"Looking for new records in {url}")
-            parser_config = {'valid_tags': ['tr', 'td', 'a', 'br', 'b'], 'skip_tags': ['b']}
-            page = MyHTMLParser(parser_config).feed_and_return(_get(url).text)
+            page = MyHTMLParser(config["sscom.parser.config"]).feed_and_return(_get(url).text)
             last = extract_pages(page.data)
             data += page.data
             pages_max = last.split('page')[1].split('.')[0]
 
-            for p in range(2, int(pages_max)+1):
+            for p in range(2, int(pages_max) + 1):
                 _url = f"{config['sscom.url']}{last.replace(pages_max, str(p))}"
                 logger.debug(f"Looking for new records in rest of pages {_url}")
                 data += MyHTMLParser(parser_config).feed_and_return(_get(_url).text).data
@@ -155,7 +155,6 @@ type_mapping = {
     'Čehu pr.': 'Чеш. пр.'
 }
 
-
 room_mapping = {
     'Citi': '-'
 }
@@ -180,9 +179,11 @@ def build_db_record(items):
     try:
         a = {'kind': 'ad', 'url': '/'.join(items[0].split('/')[3:]), address_field: items[1], 'date': datetime.utcnow()}
         if len(items) == 6:
-            a.update({'m2': items[2], 'level': items[3], 'type': get_type_mapping('Priv. m.'), 'price_m2': items[4], 'price': items[5]})
+            a.update({'m2': items[2], 'level': items[3], 'type': get_type_mapping('Priv. m.'), 'price_m2': items[4],
+                      'price': items[5]})
         elif len(items) == 8:
-            a.update({'rooms': get_room_mapping(items[2]), 'm2': items[3], 'level': items[4], 'type': get_type_mapping(items[5]), 'price_m2': items[6], 'price': items[7]})
+            a.update({'rooms': get_room_mapping(items[2]), 'm2': items[3], 'level': items[4],
+                      'type': get_type_mapping(items[5]), 'price_m2': items[6], 'price': items[7]})
     except RuntimeError as e:
         logger.debug(e)
     return a
@@ -232,21 +233,15 @@ while True:
 
         with myclient:
             ss_ads = myclient.ss_ads
-
             data = request_ss_records()
 
-            ads = {}
-            new_ads = []
-            outdated_ads = []
-            buffer = []
-            i = 0
+            ads, new_ads, outdated_ads, buffer, i = {}, [], [], [], 0
             while i < len(data):
                 d = data[i]
                 if is_url(d) or is_item(d):
                     to_buffer(buffer, d)
                 elif buffer:
-                    a = build_db_record(buffer)
-                    buffer = []
+                    a, buffer = build_db_record(buffer), []
 
                     strategy, addit = verify_ad(a['url'], a[address_field])
                     logger.debug(f"Verify AD: {strategy} {a[address_field]} url: {a['url']}")
